@@ -66,6 +66,12 @@ app.get('/msg/del/:id', (req, res) => {
     }
 });
 
+// Delete all messages
+app.delete('/msg/clearAll', (req, res) => {
+  allMsgs = [];  // Clear the messages array
+  res.json({ code: 1, message: "All messages cleared" });
+});
+
 // Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
