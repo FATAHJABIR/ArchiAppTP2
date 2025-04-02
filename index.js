@@ -1,22 +1,73 @@
-var express = require('express'); //import de la bibliothèque Express
-var app = express(); //instanciation d'une application Express
+const express = require('express');
+const cors = require('cors');
 
-// Pour s'assurer que l'on peut faire des appels AJAX au serveur
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Message storage
+let allMsgs = [
+  { msg: "Hello World", author: "Alice", date: "2024-03-30" },
+  { msg: "foobar", author: "Bob", date: "2024-03-31" },
+  { msg: "Asma I love you", author: "Jabir", date: "2024-04-01" }
+];
+
+// Counter endpoints
+let compteur = 0;
+app.get('/cpt/query', (req, res) => {
+    res.json({ compteur });
 });
 
-// Ici faut faire faire quelque chose à notre app...
-// On va mettre les "routes"  == les requêtes HTTP acceptéés par notre application.
+app.get('/cpt/inc', (req, res) => {
+    let v = parseInt(req.query.v);
+    if (!isNaN(v)) {
+        compteur += v;
+        res.json({ code: 0 });
+    } else {
+        res.json({ code: -1 });
+    }
+});
 
-app.get("/", function(req, res) {
-  res.send("Hello")
-})
+// Message endpoints
+app.get('/msg/getAll', (req, res) => {
+    res.json(allMsgs);
+});
 
+app.get('/msg/get/:id', (req, res) => {
+    let id = parseInt(req.params.id);
+    if (!isNaN(id) && id >= 0 && id < allMsgs.length) {
+        res.json({ code: 1, msg: allMsgs[id] });
+    } else {
+        res.json({ code: 0 });
+    }
+});
 
+app.get('/msg/nber', (req, res) => {
+    res.json({ count: allMsgs.length });
+});
 
-app.listen(8080); //commence à accepter les requêtes
-console.log("App listening on port 8080...");
+// Modified to accept author and date
+app.get('/msg/post/:message', (req, res) => {
+    const msg = decodeURIComponent(req.params.message);
+    const author = req.query.author || "Anonymous";
+    const date = new Date().toISOString().split('T')[0];
 
+    allMsgs.push({ msg, author, date });
+    res.json({ code: 1, id: allMsgs.length - 1 });
+});
+
+app.get('/msg/del/:id', (req, res) => {
+    let id = parseInt(req.params.id);
+    if (!isNaN(id) && id >= 0 && id < allMsgs.length) {
+        allMsgs.splice(id, 1);
+        res.json({ code: 1 });
+    } else {
+        res.json({ code: 0 });
+    }
+});
+
+// Start server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
